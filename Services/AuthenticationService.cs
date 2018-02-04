@@ -11,7 +11,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
-using System.Web;
 
 
 namespace CodeSanook.Authentication.Services
@@ -109,9 +108,9 @@ namespace CodeSanook.Authentication.Services
             {
                 return false;
             }
-
-            return Authorize(accessToken, permission, content); 
+            return Authorize(accessToken, permission, content);
         }
+
 
         public bool Authorize(string accessToken, Permission permission, IContent content)
         {
@@ -190,6 +189,16 @@ namespace CodeSanook.Authentication.Services
                     JweAlgorithm.A256GCMKW,
                     JweEncryption.A256CBC_HS512);
             return accessToken;
+        }
+
+        public bool Authorize(string accessToken, Permission permission)
+        {
+            return Authorize(accessToken, permission, null);
+        }
+
+        public bool Authorize(HttpRequestMessage request, Permission permission)
+        {
+            return Authorize(request, permission, null);
         }
     }
 }
