@@ -6,7 +6,7 @@ using System.Net.Http;
 
 namespace CodeSanook.Authentication.Services
 {
-    public interface IAuthenticationService : IDependency
+    public interface IAuthorizationService : IDependency
     {
         RefreshTokenResponse CreateRefreshToken(RefreshTokenRequest request);
         AccessTokenResponse CreateAccessToken(AccessTokenRequest request);

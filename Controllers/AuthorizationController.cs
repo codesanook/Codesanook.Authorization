@@ -13,14 +13,14 @@ namespace CodeSanook.Authentication.Controllers
     {
         private readonly IOrchardServices orchardService;
         private readonly IMembershipService membershipService;
-        private readonly Services.IAuthenticationService authenticationService;
+        private readonly Services.IAuthorizationService authenticationService;
 
         public Localizer T { get; set; }
 
         public AuthenticationController(
             IOrchardServices orchardService,
             IMembershipService membershipService,
-            Services.IAuthenticationService authenticationService
+            Services.IAuthorizationService authenticationService
             )
         {
             this.orchardService = orchardService;
