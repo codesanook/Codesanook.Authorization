@@ -1,18 +1,17 @@
-﻿using CodeSanook.Authentication.Models;
+﻿using CodeSanook.Authorization.Models;
 using Orchard;
 using Orchard.ContentManagement;
 using Orchard.Security.Permissions;
 using System.Net.Http;
 
-namespace CodeSanook.Authentication.Services
+namespace CodeSanook.Authorization.Services
 {
     public interface IAuthorizationService : IDependency
     {
         RefreshTokenResponse CreateRefreshToken(RefreshTokenRequest request);
         AccessTokenResponse CreateAccessToken(AccessTokenRequest request);
-        bool Authorize(string accessToken, Permission permission, IContent content);
-        bool Authorize(string accessToken, Permission permission);
-        bool Authorize(HttpRequestMessage request, Permission permission, IContent content);
-        bool Authorize(HttpRequestMessage request, Permission permission);
+
+        bool Authorize(string accessToken, Permission permission, IContent content = null);
+        bool Authorize(Permission permission, IContent content = null);
     }
 }

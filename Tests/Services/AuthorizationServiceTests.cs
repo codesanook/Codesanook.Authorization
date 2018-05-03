@@ -1,15 +1,10 @@
-﻿using CodeSanook.Authentication.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
+﻿using CodeSanook.Authorization.Models;
 using Xunit;
 
 namespace CodeSanook.Authentication.Tests.Services
 {
-    public class AuthenticationServiceTests
+    public class AuthorizationServiceTests
     {
-
         [Fact]
         public void Test()
         {

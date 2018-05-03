@@ -1,4 +1,4 @@
-﻿namespace CodeSanook.Authentication
+﻿namespace CodeSanook.Authorization.Models
 {
     /*
     Registered Claims

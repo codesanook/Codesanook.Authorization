@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace CodeSanook.Authentication.Models
+﻿namespace CodeSanook.Authorization.Models
 {
     public class RefreshTokenRequest
     {

@@ -1,21 +1,19 @@
-﻿using CodeSanook.Authentication.Models;
+﻿using CodeSanook.Authorization.Models;
 using Jose;
 using Orchard;
 using Orchard.ContentManagement;
+using Orchard.Mvc;
 using Orchard.Roles.Models;
 using Orchard.Security;
 using Orchard.Security.Permissions;
 using Orchard.Users.Models;
 using System;
 using System.Linq;
-using System.Net.Http;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
 
-
-namespace CodeSanook.Authentication.Services
+namespace CodeSanook.Authorization.Services
 {
-
     //https://scotch.io/tutorials/the-anatomy-of-a-json-web-token
     //https://github.com/dvsekhvalnov/jose-jwt
     //http://www.svlada.com/jwt-token-authentication-with-spring-boot/
@@ -27,19 +25,20 @@ namespace CodeSanook.Authentication.Services
         private readonly IOrchardServices orchardService;
         private readonly IMembershipService membershipService;
         private readonly Orchard.Security.IAuthorizationService authorizationService;
-
-
+        private readonly IHttpContextAccessor httpContextAccessor;
         private static Regex accessTokenRegex = new Regex(@"Bearer\s+(?<accessToken>.+)", RegexOptions.Compiled);
 
         public AuthorizationService(
             IOrchardServices orchardService,
             IMembershipService membershipService,
-            Orchard.Security.IAuthorizationService authorizationService
+            Orchard.Security.IAuthorizationService authorizationService,
+            IHttpContextAccessor httpContextAccessor
             )
         {
             this.orchardService = orchardService;
             this.membershipService = membershipService;
             this.authorizationService = authorizationService;
+            this.httpContextAccessor = httpContextAccessor;
         }
 
         public RefreshTokenResponse CreateRefreshToken(RefreshTokenRequest request)
@@ -93,10 +92,12 @@ namespace CodeSanook.Authentication.Services
             return response;
         }
 
-        public bool Authorize(HttpRequestMessage request, Permission permission, IContent content)
+        public bool Authorize(Permission permission, IContent content =null)
         {
+            var httpContext = httpContextAccessor.Current();
+            var request = httpContext.Request;
             const string headerKey = "Authorization";
-            if (!request.Headers.Contains(headerKey))
+            if (!request.Headers.AllKeys.Contains(headerKey))
             {
                 return false;
             }
@@ -189,16 +190,6 @@ namespace CodeSanook.Authentication.Services
                     JweAlgorithm.A256GCMKW,
                     JweEncryption.A256CBC_HS512);
             return accessToken;
-        }
-
-        public bool Authorize(string accessToken, Permission permission)
-        {
-            return Authorize(accessToken, permission, null);
-        }
-
-        public bool Authorize(HttpRequestMessage request, Permission permission)
-        {
-            return Authorize(request, permission, null);
         }
     }
 }
