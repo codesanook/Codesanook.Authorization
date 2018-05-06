@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace CodeSanook.Authorization
 {
-    public class ApiRoutes : IHttpRouteProvider
+    public class WebRoutes : IHttpRouteProvider
     {
         const string RouteTemplate = "authentication/{action}";
 

@@ -2,6 +2,8 @@
 using Jose;
 using Orchard;
 using Orchard.ContentManagement;
+using Orchard.Localization;
+using Orchard.Logging;
 using Orchard.Mvc;
 using Orchard.Roles.Models;
 using Orchard.Security;
@@ -24,7 +26,7 @@ namespace CodeSanook.Authorization.Services
             new byte[] { 164, 60, 194, 0, 161, 189, 41, 38, 130, 89, 141, 164, 45, 170, 159, 209, 69, 137, 243, 216, 191, 131, 47, 250, 32, 107, 231, 117, 37, 158, 225, 234 };
         private readonly IOrchardServices orchardService;
         private readonly IMembershipService membershipService;
-        private readonly Orchard.Security.IAuthorizationService authorizationService;
+        private readonly Orchard.Security.IAuthorizationService orchardAuthorizationService;
         private readonly IHttpContextAccessor httpContextAccessor;
         private static Regex accessTokenRegex = new Regex(@"Bearer\s+(?<accessToken>.+)", RegexOptions.Compiled);
 
@@ -37,8 +39,24 @@ namespace CodeSanook.Authorization.Services
         {
             this.orchardService = orchardService;
             this.membershipService = membershipService;
-            this.authorizationService = authorizationService;
+            this.orchardAuthorizationService = authorizationService;
             this.httpContextAccessor = httpContextAccessor;
+        }
+
+        //property injection
+        public ILogger Logger { get; set; }
+        public Localizer T { get; set; }
+
+        public IUser GetAuthenticatedUser()
+        {
+            var accessToken = GetAccessTokenFromRequest();
+            var user = GetUser(accessToken);
+            return user;
+        }
+
+        public void CheckAccess(Permission permission, IUser user, IContent content = null)
+        {
+            orchardAuthorizationService.CheckAccess(permission, user, content);
         }
 
         public RefreshTokenResponse CreateRefreshToken(RefreshTokenRequest request)
@@ -76,15 +94,8 @@ namespace CodeSanook.Authorization.Services
 
         public AccessTokenResponse CreateAccessToken(AccessTokenRequest request)
         {
-            var claim = ValidateRefreshToken(request.RefreshToken);
-            var email = claim.sub;
-            var user = orchardService.ContentManager.Query<UserPart, UserPartRecord>()
-                .Where<UserPartRecord>(u => u.Email == email)
-                .List()
-                .Single();
-
+            var user = GetUser(request.RefreshToken);
             var accessToken = CreateAccessToken(user);
-
             var response = new AccessTokenResponse()
             {
                 AccessToken = accessToken
@@ -92,14 +103,14 @@ namespace CodeSanook.Authorization.Services
             return response;
         }
 
-        public bool Authorize(Permission permission, IContent content =null)
+        private string GetAccessTokenFromRequest()
         {
             var httpContext = httpContextAccessor.Current();
             var request = httpContext.Request;
             const string headerKey = "Authorization";
             if (!request.Headers.AllKeys.Contains(headerKey))
             {
-                return false;
+                throw new AuthenticationException("no access token");
             }
 
             var rawValue = request.Headers.GetValues(headerKey).First();
@@ -107,47 +118,39 @@ namespace CodeSanook.Authorization.Services
             var accessToken = match.Groups["accessToken"].Value;
             if (string.IsNullOrEmpty(accessToken))
             {
-                return false;
+                throw new AuthenticationException("no access token");
             }
-            return Authorize(accessToken, permission, content);
+            return accessToken;
         }
 
-
-        public bool Authorize(string accessToken, Permission permission, IContent content)
-        {
-            var cliam = this.GetCliam(accessToken);
-            var user = orchardService.ContentManager.Query<UserPart, UserPartRecord>()
-                .Where<UserPartRecord>(u => u.Email == cliam.sub)
-                .List()
-                .Single();
-            return authorizationService.TryCheckAccess(permission, user, content);
-        }
-
-        private Claim ValidateRefreshToken(string refreshToken)
+        private Claim GetValidToken(string token)
         {
             try
             {
-                var claim = JWT.Decode<Claim>(refreshToken, secretKey, JweAlgorithm.A256GCMKW, JweEncryption.A256CBC_HS512);
+                var claim = JWT.Decode<Claim>(
+                    token,
+                    secretKey,
+                    JweAlgorithm.A256GCMKW,
+                    JweEncryption.A256CBC_HS512);
 
                 var utcNow = DateTime.UtcNow;
                 var expire = GetUtcDateTime(claim.exp);
-
                 if (utcNow > expire)
                 {
-                    throw new AuthenticationException("refresh token expire");
+                    throw new AuthenticationException("token expire");
                 }
+
                 return claim;
             }
-            catch (Exception)
+            catch(AuthenticationException ex)
             {
-                throw new AuthenticationException("invalid refresh token");
+                throw;
             }
-        }
-
-        private Claim GetCliam(string token)
-        {
-            var cliam = JWT.Decode<Claim>(token, secretKey, JweAlgorithm.A256GCMKW, JweEncryption.A256CBC_HS512);
-            return cliam;
+            catch (Exception ex)
+            {
+                this.Logger.Error(ex, ex.Message);
+                throw new AuthenticationException("invalid token");
+            }
         }
 
         private long GetUtcTimestamp(DateTime dateTime)
@@ -174,7 +177,7 @@ namespace CodeSanook.Authorization.Services
         private string CreateAccessToken(IUser user)
         {
             var now = DateTime.UtcNow;
-            var accessTokenExpiration = GetUtcTimestamp(now.AddMinutes(5));
+            var accessTokenExpiration = GetUtcTimestamp(now.AddMinutes(30));
             var role = user.As<UserRolesPart>();
             var accessTokenClaim = new Claim()
             {
@@ -190,6 +193,21 @@ namespace CodeSanook.Authorization.Services
                     JweAlgorithm.A256GCMKW,
                     JweEncryption.A256CBC_HS512);
             return accessToken;
+        }
+
+        private IUser GetUser(string accessToken)
+        {
+            var claim = GetValidToken(accessToken);
+            var user = orchardService.ContentManager.Query<UserPart, UserPartRecord>()
+                .Where<UserPartRecord>(u => u.Email == claim.sub)
+                .List()
+                .SingleOrDefault();
+            if (user == null)
+            {
+                throw new AuthenticationException("no user with given access token");
+            }
+
+            return user;
         }
     }
 }
