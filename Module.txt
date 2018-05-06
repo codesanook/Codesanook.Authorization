@@ -1,10 +1,10 @@
-﻿Name: CodeSanook.Authentication
+﻿Name: CodeSanook.Authorization
 AntiForgery: enabled
-Author: The Orchard Team
-Website: http://orchardproject.net
+Author: Aaron Amm
+Website: http://codesanook.com
 Version: 1.0
 OrchardVersion: 1.0
-Description: Description for the module
+Description: Module for Authentication, Authorization, JWT, access token, session token 
 Features:
-    CodeSanook.Authentication:
-        Description: Description for feature CodeSanook.Authentication.
+    CodeSanook.Authorization:
+        Description: Module for Authentication, Authorization, JWT, access token, session token
