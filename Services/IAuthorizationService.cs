@@ -3,7 +3,6 @@ using Orchard;
 using Orchard.ContentManagement;
 using Orchard.Security;
 using Orchard.Security.Permissions;
-using System.Net.Http;
 
 namespace CodeSanook.Authorization.Services
 {
@@ -13,5 +12,6 @@ namespace CodeSanook.Authorization.Services
         AccessTokenResponse CreateAccessToken(AccessTokenRequest request);
         void CheckAccess(Permission permission, IUser user, IContent content = null);
         IUser GetAuthenticatedUser();
+        IUser ValidateUser(string email, string password);
     }
 }

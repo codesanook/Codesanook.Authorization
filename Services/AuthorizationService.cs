@@ -50,7 +50,8 @@ namespace CodeSanook.Authorization.Services
         public IUser GetAuthenticatedUser()
         {
             var accessToken = GetAccessTokenFromRequest();
-            var user = GetUser(accessToken);
+            var claim = GetValidClaim(accessToken);
+            var user = GetValidUser(claim);
             return user;
         }
 
@@ -61,7 +62,7 @@ namespace CodeSanook.Authorization.Services
 
         public RefreshTokenResponse CreateRefreshToken(RefreshTokenRequest request)
         {
-            var user = membershipService.ValidateUser(request.Email, request.Password);
+            var user = ValidateUser(request.Email, request.Password);
             if (user == null)
             {
                 throw new AuthenticationException("email or password is incorrect");
@@ -77,24 +78,25 @@ namespace CodeSanook.Authorization.Services
                 exp = refreshTokenExpiration
             };
 
+            var accessToken = CreateAccessToken(user);
             var refreshToken = JWT.Encode(
                     refreshTokenClaim,
                     secretKey,
                     JweAlgorithm.A256GCMKW,
                     JweEncryption.A256CBC_HS512);
-            var accessToken = CreateAccessToken(user);
 
             var response = new RefreshTokenResponse()
             {
-                RefreshToken = refreshToken,
                 AccessToken = accessToken,
+                RefreshToken = refreshToken,
             };
             return response;
         }
 
         public AccessTokenResponse CreateAccessToken(AccessTokenRequest request)
         {
-            var user = GetUser(request.RefreshToken);
+            var cliam = GetValidClaim(request.RefreshToken);
+            var user = GetValidUser(cliam);
             var accessToken = CreateAccessToken(user);
             var response = new AccessTokenResponse()
             {
@@ -123,7 +125,7 @@ namespace CodeSanook.Authorization.Services
             return accessToken;
         }
 
-        private Claim GetValidToken(string token)
+        private Claim GetValidClaim(string token)
         {
             try
             {
@@ -142,7 +144,7 @@ namespace CodeSanook.Authorization.Services
 
                 return claim;
             }
-            catch(AuthenticationException ex)
+            catch (AuthenticationException ex)
             {
                 throw;
             }
@@ -177,7 +179,7 @@ namespace CodeSanook.Authorization.Services
         private string CreateAccessToken(IUser user)
         {
             var now = DateTime.UtcNow;
-            var accessTokenExpiration = GetUtcTimestamp(now.AddMinutes(30));
+            var accessTokenExpiration = GetUtcTimestamp(now.AddMinutes(5));
             var role = user.As<UserRolesPart>();
             var accessTokenClaim = new Claim()
             {
@@ -195,16 +197,42 @@ namespace CodeSanook.Authorization.Services
             return accessToken;
         }
 
-        private IUser GetUser(string accessToken)
+        public IUser ValidateUser(string email, string password)
         {
-            var claim = GetValidToken(accessToken);
+            if (string.IsNullOrEmpty(email))
+            {
+                throw new AuthenticationException($"validate user error because email is null or empty");
+            }
+
+            var user = GetValidUser(email);
+            return membershipService.ValidateUser(email, password);
+        }
+
+        private IUser GetValidUser(Claim claim)
+        {
+            return GetValidUser(claim.sub);
+        }
+
+        private IUser GetValidUser(string email)
+        {
+            var lowerEmail = email.ToLower();
             var user = orchardService.ContentManager.Query<UserPart, UserPartRecord>()
-                .Where<UserPartRecord>(u => u.Email == claim.sub)
+                .Where<UserPartRecord>(u => u.Email == lowerEmail)
                 .List()
                 .SingleOrDefault();
             if (user == null)
             {
-                throw new AuthenticationException("no user with given access token");
+                throw new AuthenticationException($"no user with email {lowerEmail}");
+            }
+
+            if (user.EmailStatus != UserStatus.Approved)
+            {
+                throw new AuthenticationException($"user email {lowerEmail} does not activate by email");
+            }
+
+            if (user.RegistrationStatus != UserStatus.Approved)
+            {
+                throw new AuthenticationException($"user email {lowerEmail} is deactivated");
             }
 
             return user;
