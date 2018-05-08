@@ -89,6 +89,7 @@ namespace CodeSanook.Authorization.Services
             {
                 AccessToken = accessToken,
                 RefreshToken = refreshToken,
+                UserId = user.Id
             };
             return response;
         }
