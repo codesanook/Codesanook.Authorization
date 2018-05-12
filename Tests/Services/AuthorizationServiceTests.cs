@@ -1,7 +1,7 @@
 ﻿using CodeSanook.Authorization.Models;
 using Xunit;
 
-namespace CodeSanook.Authentication.Tests.Services
+namespace CodeSanook.Authorization.Tests.Services
 {
     public class AuthorizationServiceTests
     {

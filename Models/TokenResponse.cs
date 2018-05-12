@@ -1,6 +1,6 @@
 ﻿namespace CodeSanook.Authorization.Models
 {
-    public class RefreshTokenResponse
+    public class TokenResponse
     {
         public string AccessToken { get; set; }
         public string RefreshToken { get; set; } 

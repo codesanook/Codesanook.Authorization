@@ -8,8 +8,8 @@ namespace CodeSanook.Authorization.Services
 {
     public interface IAuthorizationService : IDependency
     {
-        RefreshTokenResponse CreateRefreshToken(RefreshTokenRequest request);
-        AccessTokenResponse CreateAccessToken(AccessTokenRequest request);
+        TokenResponse CreateRefreshTokenResponse(RefreshTokenRequest request);
+        TokenResponse CreateAccessTokenResponse(AccessTokenRequest request);
         void CheckAccess(Permission permission, IUser user, IContent content = null);
         IUser GetAuthenticatedUser();
         IUser ValidateUser(string email, string password);

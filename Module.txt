@@ -5,6 +5,4 @@ Website: http://codesanook.com
 Version: 1.0
 OrchardVersion: 1.0
 Description: Module for Authentication, Authorization, JWT, access token, session token 
-Features:
-    CodeSanook.Authorization:
-        Description: Module for Authentication, Authorization, JWT, access token, session token
+Dependencies: CodeSanook.Common, CodeSanook.Configuration

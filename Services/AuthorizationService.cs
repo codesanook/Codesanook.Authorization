@@ -1,4 +1,7 @@
 ﻿using CodeSanook.Authorization.Models;
+using CodeSanook.Common.DataType;
+using CodeSanook.Common.DataTypes;
+using CodeSanook.Configuration.Models;
 using Jose;
 using Orchard;
 using Orchard.ContentManagement;
@@ -21,13 +24,14 @@ namespace CodeSanook.Authorization.Services
     //http://www.svlada.com/jwt-token-authentication-with-spring-boot/
     public class AuthorizationService : IAuthorizationService
     {
-        //TODO exclude secret to configuration 
-        private byte[] secretKey =
-            new byte[] { 164, 60, 194, 0, 161, 189, 41, 38, 130, 89, 141, 164, 45, 170, 159, 209, 69, 137, 243, 216, 191, 131, 47, 250, 32, 107, 231, 117, 37, 158, 225, 234 };
         private readonly IOrchardServices orchardService;
         private readonly IMembershipService membershipService;
         private readonly Orchard.Security.IAuthorizationService orchardAuthorizationService;
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly ModuleSettingPart moduleSettingPart;
+        private readonly byte[] refreshTokenSecretKey;
+        private readonly byte[] accessTokenSecretKey;
+
         private static Regex accessTokenRegex = new Regex(@"Bearer\s+(?<accessToken>.+)", RegexOptions.Compiled);
 
         public AuthorizationService(
@@ -41,6 +45,10 @@ namespace CodeSanook.Authorization.Services
             this.membershipService = membershipService;
             this.orchardAuthorizationService = authorizationService;
             this.httpContextAccessor = httpContextAccessor;
+
+            moduleSettingPart = this.orchardService.WorkContext.CurrentSite.As<ModuleSettingPart>();
+            this.refreshTokenSecretKey = moduleSettingPart.RefreshTokenSecretKey.GetBytesFromAsciiString();
+            this.accessTokenSecretKey = moduleSettingPart.AccessTokenSecretKey.GetBytesFromAsciiString();
         }
 
         //property injection
@@ -49,9 +57,9 @@ namespace CodeSanook.Authorization.Services
 
         public IUser GetAuthenticatedUser()
         {
-            var accessToken = GetAccessTokenFromRequest();
-            var claim = GetValidClaim(accessToken);
-            var user = GetValidUser(claim);
+            var accessToken = GetAccessTokenFromHeaderRequest();
+            var accessTokenClaim = GetValidClaim(accessToken, accessTokenSecretKey);
+            var user = GetValidUser(accessTokenClaim);
             return user;
         }
 
@@ -60,53 +68,80 @@ namespace CodeSanook.Authorization.Services
             orchardAuthorizationService.CheckAccess(permission, user, content);
         }
 
-        public RefreshTokenResponse CreateRefreshToken(RefreshTokenRequest request)
+        public TokenResponse CreateRefreshTokenResponse(RefreshTokenRequest request)
         {
             var user = ValidateUser(request.Email, request.Password);
             if (user == null)
             {
                 throw new AuthenticationException("email or password is incorrect");
             }
+            return CreateTokenResponse(user);
+        }
 
-            var now = DateTime.UtcNow;
-            var refreshTokenExpiration = GetUtcTimestamp(now.AddMonths(2));
-            var refreshTokenClaim = new Claim()
+        public TokenResponse CreateAccessTokenResponse(AccessTokenRequest request)
+        {
+            var refreshTokenClaim = GetValidClaim(request.RefreshToken, refreshTokenSecretKey);
+            var user = GetValidUser(refreshTokenClaim);
+            var authorizationPart = user.As<AuthorizationPart>();
+            if (string.Compare(refreshTokenClaim.jti, authorizationPart.RefreshTokenId.ToString(), StringComparison.OrdinalIgnoreCase) != 0)
             {
-                sub = user.Email,
-                scopes = new[] { Claim.ROLE_REFRESH_TOKEN },
-                jti = Guid.NewGuid().ToString(),
-                exp = refreshTokenExpiration
-            };
+                throw new AuthenticationException("A refresh token id does not match, user may revoke a refresh token");
+            }
 
+            return CreateTokenResponse(user);
+        }
+
+        private TokenResponse CreateTokenResponse(IUser user)
+        {
+            var refreshToken = CreateRefreshToken(user);
             var accessToken = CreateAccessToken(user);
-            var refreshToken = JWT.Encode(
-                    refreshTokenClaim,
-                    secretKey,
-                    JweAlgorithm.A256GCMKW,
-                    JweEncryption.A256CBC_HS512);
-
-            var response = new RefreshTokenResponse()
+            var response = new TokenResponse()
             {
-                AccessToken = accessToken,
                 RefreshToken = refreshToken,
+                AccessToken = accessToken,
                 UserId = user.Id
             };
             return response;
         }
 
-        public AccessTokenResponse CreateAccessToken(AccessTokenRequest request)
+        private string CreateRefreshToken(IUser user)
         {
-            var cliam = GetValidClaim(request.RefreshToken);
-            var user = GetValidUser(cliam);
-            var accessToken = CreateAccessToken(user);
-            var response = new AccessTokenResponse()
+            var now = DateTime.UtcNow;
+            var refreshTokenExpiration = now.AddDays(moduleSettingPart.RefreshTokenExpireInDays)
+               .GetUtcTimestamp();
+            var refreshTokenId = Guid.NewGuid();
+            var refreshTokenClaim = new Claim()
             {
-                AccessToken = accessToken
+                sub = user.Email,
+                scopes = new[] { Claim.ROLE_REFRESH_TOKEN },
+                exp = refreshTokenExpiration,
+                jti = refreshTokenId.ToString()
             };
-            return response;
+
+            var authorizationPart = user.As<AuthorizationPart>();
+            authorizationPart.RefreshTokenId = refreshTokenId;
+
+            return EncryptedClaim(refreshTokenClaim, refreshTokenSecretKey);
         }
 
-        private string GetAccessTokenFromRequest()
+        private string CreateAccessToken(IUser user)
+        {
+            var now = DateTime.UtcNow;
+            var accessTokenExpiration = now.AddMinutes(moduleSettingPart.AccessTokenExpireInMinutes)
+                    .GetUtcTimestamp();
+            var role = user.As<UserRolesPart>();
+            var accessTokenClaim = new Claim()
+            {
+                sub = user.Email,
+                scopes = role.Roles.ToArray(),//role of the current user
+                jti = Guid.NewGuid().ToString(),
+                exp = accessTokenExpiration
+            };
+
+            return EncryptedClaim(accessTokenClaim, accessTokenSecretKey);
+        }
+
+        private string GetAccessTokenFromHeaderRequest()
         {
             var httpContext = httpContextAccessor.Current();
             var request = httpContext.Request;
@@ -126,18 +161,17 @@ namespace CodeSanook.Authorization.Services
             return accessToken;
         }
 
-        private Claim GetValidClaim(string token)
+        private Claim GetValidClaim(string token, byte[] secretKey)
         {
             try
             {
-                var claim = JWT.Decode<Claim>(
-                    token,
+                var claim = JWT.Decode<Claim>(token,
                     secretKey,
                     JweAlgorithm.A256GCMKW,
                     JweEncryption.A256CBC_HS512);
 
                 var utcNow = DateTime.UtcNow;
-                var expire = GetUtcDateTime(claim.exp);
+                var expire = claim.exp.GetUtcDateTime();
                 if (utcNow > expire)
                 {
                     throw new AuthenticationException("token expire");
@@ -156,46 +190,14 @@ namespace CodeSanook.Authorization.Services
             }
         }
 
-        private long GetUtcTimestamp(DateTime dateTime)
+        private string EncryptedClaim(Claim claim, byte[] secretKey)
         {
-            if (dateTime.Kind != DateTimeKind.Utc)
-            {
-                throw new ArgumentException("dateTime is not UTC");
-            }
-
-            var utcTime = dateTime.ToUniversalTime();
-            var beginningOfTimeStamp = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            long unixTimestamp = (long)(dateTime.Subtract(beginningOfTimeStamp)).TotalSeconds;
-            return unixTimestamp;
-        }
-
-        private DateTime GetUtcDateTime(long timestamp)
-        {
-            var now = DateTime.UtcNow;
-            var beginningOfTimeStamp = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var utcNow = beginningOfTimeStamp.AddSeconds(timestamp);
-            return utcNow;
-        }
-
-        private string CreateAccessToken(IUser user)
-        {
-            var now = DateTime.UtcNow;
-            var accessTokenExpiration = GetUtcTimestamp(now.AddMinutes(5));
-            var role = user.As<UserRolesPart>();
-            var accessTokenClaim = new Claim()
-            {
-                sub = user.Email,
-                scopes = role.Roles.ToArray(),//role of the current user
-                jti = Guid.NewGuid().ToString(),
-                exp = accessTokenExpiration
-            };
-
-            var accessToken = JWT.Encode(
-                    accessTokenClaim,
-                    secretKey,
-                    JweAlgorithm.A256GCMKW,
-                    JweEncryption.A256CBC_HS512);
-            return accessToken;
+            var token = JWT.Encode(
+                claim,
+                secretKey,
+                JweAlgorithm.A256GCMKW,
+                JweEncryption.A256CBC_HS512);
+            return token;
         }
 
         public IUser ValidateUser(string email, string password)

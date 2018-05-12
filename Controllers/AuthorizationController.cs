@@ -31,11 +31,11 @@ namespace CodeSanook.Authorization.Controllers
 
         [ActionName("refresh-token")]
         [HttpPost]
-        public RefreshTokenResponse GetRefreshToken(RefreshTokenRequest request)
+        public TokenResponse GetRefreshToken(RefreshTokenRequest request)
         {
             try
             {
-                return authenticationService.CreateRefreshToken(request);
+                return authenticationService.CreateRefreshTokenResponse(request);
             }
             catch (AuthenticationException ex)
             {
@@ -49,11 +49,11 @@ namespace CodeSanook.Authorization.Controllers
 
         [ActionName("access-token")]
         [HttpPost]
-        public AccessTokenResponse GetAccessToken(AccessTokenRequest request)
+        public TokenResponse GetAccessToken(AccessTokenRequest request)
         {
             try
             {
-                return authenticationService.CreateAccessToken(request);
+                return authenticationService.CreateAccessTokenResponse(request);
             }
             catch (AuthenticationException ex)
             {
