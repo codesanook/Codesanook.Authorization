@@ -223,6 +223,7 @@ namespace CodeSanook.Authorization.Services
                 .Where<UserPartRecord>(u => u.Email == lowerEmail)
                 .List()
                 .SingleOrDefault();
+
             if (user == null)
             {
                 throw new AuthenticationException($"no user with email {lowerEmail}");
@@ -230,12 +231,14 @@ namespace CodeSanook.Authorization.Services
 
             if (user.EmailStatus != UserStatus.Approved)
             {
-                throw new AuthenticationException($"user email {lowerEmail} does not activate by email");
+                throw new AuthenticationException(
+                    $"User with email {lowerEmail} has not verified an email." +  
+                    "Please your check your email and follow an instruction.");
             }
 
             if (user.RegistrationStatus != UserStatus.Approved)
             {
-                throw new AuthenticationException($"user email {lowerEmail} is deactivated");
+                throw new AuthenticationException($"User email with {lowerEmail} is deactivated.");
             }
 
             return user;
