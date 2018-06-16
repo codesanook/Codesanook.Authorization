@@ -38,13 +38,6 @@ namespace CodeSanook.Authorization
             ContentDefinitionManager
                 .AlterTypeDefinition<UserPart>(builder => builder.WithPart(nameof(AuthorizationPart)));
 
-            //set random secret key
-            var settingPart = orchardService.WorkContext.CurrentSite.As<ModuleSettingPart>();
-            settingPart.RefreshTokenSecretKey = StringHelper.GetRandomAsciiString(32);
-            settingPart.AccessTokenSecretKey = StringHelper.GetRandomAsciiString(32);
-
-            settingPart.RefreshTokenExpireInDays = 30;//days
-            settingPart.AccessTokenExpireInMinutes = 30;//minutes
             return 1;
         }
     }

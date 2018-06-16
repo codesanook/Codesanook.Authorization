@@ -232,8 +232,8 @@ namespace CodeSanook.Authorization.Services
             if (user.EmailStatus != UserStatus.Approved)
             {
                 throw new AuthenticationException(
-                    $"User with email {lowerEmail} has not verified an email." +  
-                    "Please your check your email and follow an instruction.");
+                    $"User with email {lowerEmail} has not verified an email. " +  
+                    "Please check your email and follow an instruction.");
             }
 
             if (user.RegistrationStatus != UserStatus.Approved)
