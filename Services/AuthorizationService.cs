@@ -233,12 +233,12 @@ namespace CodeSanook.Authorization.Services
             {
                 throw new AuthenticationException(
                     $"User with email {lowerEmail} has not verified an email. " +  
-                    "Please check your email and follow an instruction.");
+                    "Please check your email inbox and follow an instruction.");
             }
 
             if (user.RegistrationStatus != UserStatus.Approved)
             {
-                throw new AuthenticationException($"User email with {lowerEmail} is deactivated.");
+                throw new AuthenticationException($"User with email {lowerEmail} is deactivated, please contact your administrator.");
             }
 
             return user;
