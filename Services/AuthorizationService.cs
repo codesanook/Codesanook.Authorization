@@ -13,6 +13,7 @@ using Orchard.Security;
 using Orchard.Security.Permissions;
 using Orchard.Users.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
@@ -208,7 +209,9 @@ namespace CodeSanook.Authorization.Services
             }
 
             var user = GetValidUser(email);
-            return membershipService.ValidateUser(email, password);
+
+            List<LocalizedString> validationErrors = null;
+            return membershipService.ValidateUser(email, password,out validationErrors );
         }
 
         private IUser GetValidUser(Claim claim)
