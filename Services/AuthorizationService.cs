@@ -11,6 +11,7 @@ using Orchard.Mvc;
 using Orchard.Roles.Models;
 using Orchard.Security;
 using Orchard.Security.Permissions;
+using Orchard.Settings;
 using Orchard.Users.Models;
 using System;
 using System.Collections.Generic;
@@ -25,7 +26,10 @@ namespace CodeSanook.Authorization.Services
     //http://www.svlada.com/jwt-token-authentication-with-spring-boot/
     public class AuthorizationService : IAuthorizationService
     {
-        private readonly IOrchardServices orchardService;
+        private static Regex accessTokenRegex = new Regex(@"Bearer\s+(?<accessToken>.+)", RegexOptions.Compiled);
+
+        private readonly IContentManager contentManager;
+        private readonly ISiteService siteService;
         private readonly IMembershipService membershipService;
         private readonly Orchard.Security.IAuthorizationService orchardAuthorizationService;
         private readonly IHttpContextAccessor httpContextAccessor;
@@ -33,23 +37,22 @@ namespace CodeSanook.Authorization.Services
         private readonly byte[] refreshTokenSecretKey;
         private readonly byte[] accessTokenSecretKey;
 
-        private static Regex accessTokenRegex = new Regex(@"Bearer\s+(?<accessToken>.+)", RegexOptions.Compiled);
-
         public AuthorizationService(
-            IOrchardServices orchardService,
+            IContentManager contentManager,
             IMembershipService membershipService,
             Orchard.Security.IAuthorizationService authorizationService,
-            IHttpContextAccessor httpContextAccessor
-            )
+            IHttpContextAccessor httpContextAccessor,
+            ISiteService siteService)
         {
-            this.orchardService = orchardService;
+            this.contentManager = contentManager;
             this.membershipService = membershipService;
             this.orchardAuthorizationService = authorizationService;
             this.httpContextAccessor = httpContextAccessor;
+            this.siteService = siteService;
 
-            moduleSettingPart = this.orchardService.WorkContext.CurrentSite.As<ModuleSettingPart>();
-            this.refreshTokenSecretKey = moduleSettingPart.RefreshTokenSecretKey.GetBytesFromAsciiString();
-            this.accessTokenSecretKey = moduleSettingPart.AccessTokenSecretKey.GetBytesFromAsciiString();
+            moduleSettingPart = this.siteService.GetSiteSettings().As<ModuleSettingPart>();
+            refreshTokenSecretKey = moduleSettingPart.RefreshTokenSecretKey.GetBytesFromAsciiString();
+            accessTokenSecretKey = moduleSettingPart.AccessTokenSecretKey.GetBytesFromAsciiString();
         }
 
         //property injection
@@ -121,7 +124,6 @@ namespace CodeSanook.Authorization.Services
 
             var authorizationPart = user.As<AuthorizationPart>();
             authorizationPart.RefreshTokenId = refreshTokenId;
-
             return EncryptedClaim(refreshTokenClaim, refreshTokenSecretKey);
         }
 
@@ -211,7 +213,7 @@ namespace CodeSanook.Authorization.Services
             var user = GetValidUser(email);
 
             List<LocalizedString> validationErrors = null;
-            return membershipService.ValidateUser(email, password,out validationErrors );
+            return membershipService.ValidateUser(email, password, out validationErrors);
         }
 
         private IUser GetValidUser(Claim claim)
@@ -222,7 +224,7 @@ namespace CodeSanook.Authorization.Services
         private IUser GetValidUser(string email)
         {
             var lowerEmail = email.ToLower();
-            var user = orchardService.ContentManager.Query<UserPart, UserPartRecord>()
+            var user = contentManager.Query<UserPart, UserPartRecord>()
                 .Where<UserPartRecord>(u => u.Email == lowerEmail)
                 .List()
                 .SingleOrDefault();
@@ -235,7 +237,7 @@ namespace CodeSanook.Authorization.Services
             if (user.EmailStatus != UserStatus.Approved)
             {
                 throw new AuthenticationException(
-                    $"User with email {lowerEmail} has not verified an email. " +  
+                    $"User with email {lowerEmail} has not verified an email. " +
                     "Please check your email inbox and follow an instruction.");
             }
 
