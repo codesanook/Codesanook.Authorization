@@ -243,7 +243,7 @@ namespace CodeSanook.Authorization.Services
 
             if (user.RegistrationStatus != UserStatus.Approved)
             {
-                throw new AuthenticationException($"User with email {lowerEmail} is deactivated, please contact your administrator.");
+                throw new AuthenticationException($"User with email {lowerEmail} has not been activated, please contact your administrator.");
             }
 
             return user;
