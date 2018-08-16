@@ -1,5 +1,5 @@
 ﻿using CodeSanook.Common.DataTypes;
-using CodeSanook.Configuration;
+using CodeSanook.Configuration.Handlers;
 using CodeSanook.Configuration.Models;
 using Orchard;
 using Orchard.ContentManagement;
@@ -15,7 +15,7 @@ namespace CodeSanook.Authorization.Handlers
             this.orchardService = orchardService;
         }
 
-        public void OnSettingTableCreated()
+        public void OnInitialized()
         {
             //set random secret key
             var settingPart = orchardService.WorkContext.CurrentSite.As<ModuleSettingPart>();
