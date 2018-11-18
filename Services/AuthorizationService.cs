@@ -3,7 +3,6 @@ using CodeSanook.Common.DataType;
 using CodeSanook.Common.DataTypes;
 using CodeSanook.Configuration.Models;
 using Jose;
-using Orchard;
 using Orchard.ContentManagement;
 using Orchard.Localization;
 using Orchard.Logging;
