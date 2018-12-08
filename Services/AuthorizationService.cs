@@ -181,13 +181,10 @@ namespace CodeSanook.Authorization.Services
 
                 return claim;
             }
-            catch (AuthenticationException ex)
+            catch (Exception ex) when (!(ex is AuthenticationException))
             {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                this.Logger.Error(ex, ex.Message);
+                //Log error and generalize everything to invalid token
+                Logger.Error(ex, ex.Message);
                 throw new AuthenticationException("invalid token");
             }
         }
