@@ -6,16 +6,22 @@ using System.Web.Http.Filters;
 
 namespace CodeSanook.Authorization
 {
-    public class AuthorizationExceptionAttribute : ExceptionFilterAttribute
+    public class AuthenticationExceptionAttribute : ExceptionFilterAttribute
     {
         public override void OnException(HttpActionExecutedContext actionExecutedContext)
         {
             var exception = actionExecutedContext.Exception;
             if (exception is AuthenticationException)
             {
+                var authenticationException = exception as AuthenticationException;
+                var customErrorMessage = authenticationException.GetCustomErrorMessage();
+
                 var response = new HttpResponseMessage(HttpStatusCode.Unauthorized)
                 {
-                    ReasonPhrase = exception.Message,
+                    ReasonPhrase = authenticationException.GetType().Name,
+                    Content = !string.IsNullOrEmpty(customErrorMessage)
+                        ? new StringContent(customErrorMessage)
+                        : new StringContent(authenticationException.Message)
                 };
                 actionExecutedContext.Response = response;
             }

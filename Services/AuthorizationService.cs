@@ -1,4 +1,5 @@
-﻿using CodeSanook.Authorization.Models;
+﻿using CodeSanook.Authorization.Handlers;
+using CodeSanook.Authorization.Models;
 using CodeSanook.Common.DataType;
 using CodeSanook.Common.DataTypes;
 using CodeSanook.Configuration.Models;
@@ -29,6 +30,7 @@ namespace CodeSanook.Authorization.Services
 
         private readonly IContentManager contentManager;
         private readonly ISiteService siteService;
+        private readonly IAuthorizationEventHandler authorizationEventHandler;
         private readonly IMembershipService membershipService;
         private readonly Orchard.Security.IAuthorizationService orchardAuthorizationService;
         private readonly IHttpContextAccessor httpContextAccessor;
@@ -41,14 +43,16 @@ namespace CodeSanook.Authorization.Services
             IMembershipService membershipService,
             Orchard.Security.IAuthorizationService authorizationService,
             IHttpContextAccessor httpContextAccessor,
-            ISiteService siteService)
+            ISiteService siteService,
+            IAuthorizationEventHandler authorizationEventHandler
+        )
         {
             this.contentManager = contentManager;
             this.membershipService = membershipService;
             this.orchardAuthorizationService = authorizationService;
             this.httpContextAccessor = httpContextAccessor;
             this.siteService = siteService;
-
+            this.authorizationEventHandler = authorizationEventHandler;
             moduleSettingPart = this.siteService.GetSiteSettings().As<ModuleSettingPart>();
             refreshTokenSecretKey = moduleSettingPart.RefreshTokenSecretKey.GetBytesFromAsciiString();
             accessTokenSecretKey = moduleSettingPart.AccessTokenSecretKey.GetBytesFromAsciiString();
@@ -232,14 +236,20 @@ namespace CodeSanook.Authorization.Services
 
             if (user.EmailStatus != UserStatus.Approved)
             {
-                throw new AuthenticationException(
-                    $"User with email {lowerEmail} has not verified an email. " +
-                    "Please check your email inbox and follow an instruction.");
+                var exception = new AuthenticationException(
+                    string.Format(moduleSettingPart.UnverifiedEmailErrorMessageTemplate, lowerEmail)
+                );
+                authorizationEventHandler.OnUnverifiedEmailException(exception, user);
+                throw exception;
             }
 
             if (user.RegistrationStatus != UserStatus.Approved)
             {
-                throw new AuthenticationException($"User with email {lowerEmail} has not been activated, please contact your administrator.");
+                var exception = new AuthenticationException(
+                    string.Format(moduleSettingPart.UnactivatedErrorMesageTemplate, lowerEmail)
+                );
+                authorizationEventHandler.OnUnactivatedException(exception, user);
+                throw exception;
             }
 
             return user;

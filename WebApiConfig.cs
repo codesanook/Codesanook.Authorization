@@ -8,7 +8,7 @@ namespace CodeSanook.Authorization.Web
         protected override void Load(ContainerBuilder builder)
         {
             var config = GlobalConfiguration.Configuration;
-            config.Filters.Add(new AuthorizationExceptionAttribute());
+            config.Filters.Add(new AuthenticationExceptionAttribute());
         }
     }
 }

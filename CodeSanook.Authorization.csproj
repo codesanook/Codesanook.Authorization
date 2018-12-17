@@ -107,10 +107,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AuthorizationExceptionAttribute.cs" />
+    <Compile Include="AuthenticationExceptionAttribute.cs" />
     <Compile Include="Drivers\AuthorizationPartDriver.cs" />
+    <Compile Include="AuthenticationExceptionHelper.cs" />
     <Compile Include="Handlers\AuthorizationPartHandler.cs" />
-    <Compile Include="Handlers\ConfigurationEventHandler.cs" />
+    <Compile Include="Handlers\IAuthorizationEventHandler.cs" />
     <Compile Include="Migrations.cs" />
     <Compile Include="Models\AuthorizationPart.cs" />
     <Compile Include="Models\AuthorizationPartRecord.cs" />
