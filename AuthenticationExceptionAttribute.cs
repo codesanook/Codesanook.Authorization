@@ -2,6 +2,8 @@
 using System.Net;
 using System.Net.Http;
 using System.Security.Authentication;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Web.Http.Filters;
 
 namespace CodeSanook.Authorization
@@ -24,6 +26,7 @@ namespace CodeSanook.Authorization
                         : new StringContent(authenticationException.Message)
                 };
                 actionExecutedContext.Response = response;
+                actionExecutedContext.Exception = null;
             }
             else if (exception is OrchardSecurityException)
             {
@@ -34,6 +37,7 @@ namespace CodeSanook.Authorization
                     ReasonPhrase = message
                 };
                 actionExecutedContext.Response = response;
+                actionExecutedContext.Exception = null;
             }
         }
     }
