@@ -1,9 +1,7 @@
-﻿using Orchard.Security;
+using Orchard.Security;
 using System.Net;
 using System.Net.Http;
 using System.Security.Authentication;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web.Http.Filters;
 
 namespace CodeSanook.Authorization
