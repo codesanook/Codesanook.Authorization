@@ -2,9 +2,9 @@ using Orchard.Localization;
 using Orchard;
 using System.Web.Http;
 using Orchard.Security;
-using CodeSanook.Authorization.Models;
+using Codesanook.Authorization.Models;
 
-namespace CodeSanook.Authorization.Controllers
+namespace Codesanook.Authorization.Controllers
 {
     public class AuthenticationController : ApiController
     {

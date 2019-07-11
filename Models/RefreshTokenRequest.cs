@@ -1,4 +1,4 @@
-﻿namespace CodeSanook.Authorization.Models
+﻿namespace Codesanook.Authorization.Models
 {
     public class RefreshTokenRequest
     {

@@ -1,6 +1,6 @@
 ﻿using System.Security.Authentication;
 
-namespace CodeSanook.Authorization
+namespace Codesanook.Authorization
 {
     public static class AuthenticationExceptionHelper
     {

@@ -1,8 +1,8 @@
-﻿using CodeSanook.Authorization.Handlers;
-using CodeSanook.Authorization.Models;
-using CodeSanook.Common.DataType;
-using CodeSanook.Common.DataTypes;
-using CodeSanook.Configuration.Models;
+﻿using Codesanook.Authorization.Handlers;
+using Codesanook.Authorization.Models;
+using Codesanook.Common.DataType;
+using Codesanook.Common.DataTypes;
+using Codesanook.Configuration.Models;
 using Jose;
 using Orchard.ContentManagement;
 using Orchard.Localization;
@@ -19,7 +19,7 @@ using System.Linq;
 using System.Security.Authentication;
 using System.Text.RegularExpressions;
 
-namespace CodeSanook.Authorization.Services
+namespace Codesanook.Authorization.Services
 {
     //https://scotch.io/tutorials/the-anatomy-of-a-json-web-token
     //https://github.com/dvsekhvalnov/jose-jwt

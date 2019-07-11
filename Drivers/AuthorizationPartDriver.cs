@@ -1,7 +1,7 @@
-﻿using CodeSanook.Authorization.Models;
+﻿using Codesanook.Authorization.Models;
 using Orchard.ContentManagement.Drivers;
 
-namespace CodeSanook.Authorization
+namespace Codesanook.Authorization
 {
     /// <summary>
     /// This just a requirement to make attached part work

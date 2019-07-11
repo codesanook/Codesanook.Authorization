@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Security.Authentication;
 using System.Web.Http.Filters;
 
-namespace CodeSanook.Authorization
+namespace Codesanook.Authorization
 {
     public class AuthenticationExceptionAttribute : ExceptionFilterAttribute
     {

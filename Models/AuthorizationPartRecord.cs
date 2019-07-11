@@ -1,7 +1,7 @@
 ﻿using Orchard.ContentManagement.Records;
 using System;
 
-namespace CodeSanook.Authorization.Models
+namespace Codesanook.Authorization.Models
 {
     public class AuthorizationPartRecord: ContentPartRecord 
     {

@@ -2,7 +2,7 @@
 using Orchard.Security;
 using System.Security.Authentication;
 
-namespace CodeSanook.Authorization.Handlers
+namespace Codesanook.Authorization.Handlers
 {
     public interface IAuthorizationEventHandler : IEventHandler
     {

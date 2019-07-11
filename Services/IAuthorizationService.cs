@@ -1,10 +1,10 @@
-﻿using CodeSanook.Authorization.Models;
+﻿using Codesanook.Authorization.Models;
 using Orchard;
 using Orchard.ContentManagement;
 using Orchard.Security;
 using Orchard.Security.Permissions;
 
-namespace CodeSanook.Authorization.Services
+namespace Codesanook.Authorization.Services
 {
     public interface IAuthorizationService : IDependency
     {

@@ -2,7 +2,7 @@
 using Orchard.WebApi.Routes;
 using System.Collections.Generic;
 
-namespace CodeSanook.Authorization
+namespace Codesanook.Authorization
 {
     public class WebRoutes : IHttpRouteProvider
     {

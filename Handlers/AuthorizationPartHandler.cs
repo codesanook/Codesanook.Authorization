@@ -1,8 +1,8 @@
-﻿using CodeSanook.Authorization.Models;
+﻿using Codesanook.Authorization.Models;
 using Orchard.ContentManagement.Handlers;
 using Orchard.Data;
 
-namespace CodeSanook.Authorization.Hanlders
+namespace Codesanook.Authorization.Hanlders
 {
     public class AuthorizationPartHandler: ContentHandler
     {

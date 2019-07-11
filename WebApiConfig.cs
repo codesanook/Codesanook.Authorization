@@ -1,7 +1,7 @@
 ﻿using Autofac;
 using System.Web.Http;
 
-namespace CodeSanook.Authorization.Web
+namespace Codesanook.Authorization.Web
 {
     public class WebApiConfig : Module
     {
