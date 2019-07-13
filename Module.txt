@@ -1,8 +1,8 @@
-﻿Name: CodeSanook.Authorization
+﻿Name: Codesanook.Authorization
 AntiForgery: enabled
-Author: Aaron Amm
-Website: http://codesanook.com
+Author: Codesanook Team
+Website: https://www.codesanook.com
 Version: 1.0
 OrchardVersion: 1.0
 Description: Module for Authentication, Authorization, JWT, access token, session token 
-Dependencies: CodeSanook.Common, CodeSanook.Configuration
+Dependencies: Codesanook.Common, Codesanook.Configuration
