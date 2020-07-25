@@ -1,8 +1,7 @@
-﻿using Codesanook.Authorization.Handlers;
+using Codesanook.Authorization.Handlers;
 using Codesanook.Authorization.Models;
 using Codesanook.Common.DataType;
 using Codesanook.Common.DataTypes;
-using Codesanook.Configuration.Models;
 using Jose;
 using Orchard.ContentManagement;
 using Orchard.Localization;
@@ -34,7 +33,7 @@ namespace Codesanook.Authorization.Services
         private readonly IMembershipService membershipService;
         private readonly Orchard.Security.IAuthorizationService orchardAuthorizationService;
         private readonly IHttpContextAccessor httpContextAccessor;
-        private readonly ModuleSettingPart moduleSettingPart;
+        private readonly AuthorizationSettingPart authorizationSettingPart;
         private readonly byte[] refreshTokenSecretKey;
         private readonly byte[] accessTokenSecretKey;
 
@@ -53,9 +52,9 @@ namespace Codesanook.Authorization.Services
             this.httpContextAccessor = httpContextAccessor;
             this.siteService = siteService;
             this.authorizationEventHandler = authorizationEventHandler;
-            moduleSettingPart = this.siteService.GetSiteSettings().As<ModuleSettingPart>();
-            refreshTokenSecretKey = moduleSettingPart.RefreshTokenSecretKey.GetBytesFromAsciiString();
-            accessTokenSecretKey = moduleSettingPart.AccessTokenSecretKey.GetBytesFromAsciiString();
+            authorizationSettingPart = this.siteService.GetSiteSettings().As<AuthorizationSettingPart>();
+            refreshTokenSecretKey = authorizationSettingPart.RefreshTokenSecretKey.GetBytesFromAsciiString();
+            accessTokenSecretKey = authorizationSettingPart.AccessTokenSecretKey.GetBytesFromAsciiString();
         }
 
         //property injection
@@ -114,7 +113,7 @@ namespace Codesanook.Authorization.Services
         private string CreateRefreshToken(IUser user)
         {
             var now = DateTime.UtcNow;
-            var refreshTokenExpiration = now.AddDays(moduleSettingPart.RefreshTokenExpireInDays)
+            var refreshTokenExpiration = now.AddDays(authorizationSettingPart.RefreshTokenExpireInDays)
                .GetUtcTimestamp();
             var refreshTokenId = Guid.NewGuid();
             var refreshTokenClaim = new Claim()
@@ -133,7 +132,7 @@ namespace Codesanook.Authorization.Services
         private string CreateAccessToken(IUser user)
         {
             var now = DateTime.UtcNow;
-            var accessTokenExpiration = now.AddMinutes(moduleSettingPart.AccessTokenExpireInMinutes)
+            var accessTokenExpiration = now.AddMinutes(authorizationSettingPart.AccessTokenExpireInMinutes)
                     .GetUtcTimestamp();
             var role = user.As<UserRolesPart>();
             var accessTokenClaim = new Claim()
@@ -237,7 +236,7 @@ namespace Codesanook.Authorization.Services
             if (user.EmailStatus != UserStatus.Approved)
             {
                 var exception = new AuthenticationException(
-                    string.Format(moduleSettingPart.UnverifiedEmailErrorMessageTemplate, lowerEmail)
+                    string.Format(authorizationSettingPart.UnverifiedEmailErrorMessageTemplate, lowerEmail)
                 );
                 authorizationEventHandler.OnUnverifiedEmailException(exception, user);
                 throw exception;
@@ -246,7 +245,7 @@ namespace Codesanook.Authorization.Services
             if (user.RegistrationStatus != UserStatus.Approved)
             {
                 var exception = new AuthenticationException(
-                    string.Format(moduleSettingPart.UnactivatedErrorMesageTemplate, lowerEmail)
+                    string.Format(authorizationSettingPart.UnactivatedErrorMesageTemplate, lowerEmail)
                 );
                 authorizationEventHandler.OnUnactivatedException(exception, user);
                 throw exception;

@@ -5,16 +5,9 @@ namespace Codesanook.Authorization.Models
 {
     public class AuthorizationPart: ContentPart<AuthorizationPartRecord>
     {
-        public Guid RefreshTokenId
-        {
-            get
-            {
-                return this.Record.RefreshTokenId;
-            }
-            set
-            {
-               this.Record.RefreshTokenId = value;
-            }
+        public Guid RefreshTokenId {
+            get => this.Record.RefreshTokenId;
+            set => this.Record.RefreshTokenId = value;
         }
     }
 }

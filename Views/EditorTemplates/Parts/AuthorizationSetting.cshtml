@@ -1,0 +1,39 @@
+@model Codesanook.Authorization.Models.AuthorizationSettingPart
+<fieldset>
+    <legend>@T("Authorization")</legend>
+    <div>
+        @Html.LabelFor(m => m.RefreshTokenSecretKey)
+        @Html.TextBoxFor(m => m.RefreshTokenSecretKey, new { @class = "text large" })
+        @Html.ValidationMessageFor(m => m.RefreshTokenSecretKey)
+    </div>
+
+    <div>
+        @Html.LabelFor(m => m.AccessTokenSecretKey)
+        @Html.TextBoxFor(m => m.AccessTokenSecretKey, new { @class = "text large" })
+        @Html.ValidationMessageFor(m => m.AccessTokenSecretKey, "*")
+    </div>
+
+    <div>
+        @Html.LabelFor(m => m.RefreshTokenExpireInDays)
+        @Html.TextBoxFor(m => m.RefreshTokenExpireInDays, new { @class = "text large" })
+        @Html.ValidationMessageFor(m => m.RefreshTokenExpireInDays)
+    </div>
+
+    <div>
+        @Html.LabelFor(m => m.AccessTokenExpireInMinutes)
+        @Html.TextBoxFor(m => m.AccessTokenExpireInMinutes, new { @class = "text large" })
+        @Html.ValidationMessageFor(m => m.AccessTokenExpireInMinutes)
+    </div>
+
+    <div>
+        @Html.LabelFor(m => m.UnverifiedEmailErrorMessageTemplate)
+        @Html.TextBoxFor(m => m.UnverifiedEmailErrorMessageTemplate, new { @class = "text large" })
+        @Html.ValidationMessageFor(m => m.UnverifiedEmailErrorMessageTemplate)
+    </div>
+
+    <div>
+        @Html.LabelFor(m => m.UnactivatedErrorMesageTemplate)
+        @Html.TextBoxFor(m => m.UnactivatedErrorMesageTemplate, new { @class = "text large" })
+        @Html.ValidationMessageFor(m => m.UnactivatedErrorMesageTemplate)
+    </div>
+</fieldset>
